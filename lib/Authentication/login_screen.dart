@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:user_login_sqflite/Authentication/signup.dart';
+import 'package:user_login_sqflite/JasonModels/user_data.dart';
+import 'package:user_login_sqflite/Route/home_page.dart';
+import 'package:user_login_sqflite/SQLite/database_helper.dart';
 
 class LoginPageScreen extends StatefulWidget {
   const LoginPageScreen({super.key});
@@ -11,12 +15,24 @@ class _LoginPageScreenState extends State<LoginPageScreen> {
   final username = TextEditingController();
   final password = TextEditingController();
   bool isVisible = false;
+  bool isLoginTrue = false;
+  final db = DatabaseHelper();
+  late String title;
 
   //login callback function
-  login(){
-    
+  login() async {
+    var response = await db
+        .login(Users(usrName: username.text, usrPassword: password.text));
+    if (response == true) {
+      if (!mounted) return;
+      Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => HomePage(title: '')));
+    } else {
+      setState(() {
+        isLoginTrue = true;
+      });
+    }
   }
-
 
   final _formkey = GlobalKey<FormState>();
   @override
@@ -99,7 +115,9 @@ class _LoginPageScreenState extends State<LoginPageScreen> {
                             ),
                             child: TextButton(
                                 onPressed: () {
-                                  login();
+                                  if (_formkey.currentState!.validate()) {
+                                    login();
+                                  }
                                 },
                                 child: const Text(
                                   "LOGIN",
@@ -112,11 +130,24 @@ class _LoginPageScreenState extends State<LoginPageScreen> {
                             children: [
                               const Text("Don't have an account?"),
                               TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  //Navigate to sign up
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: ((context) =>
+                                              const SignUp())));
+                                },
                                 child: const Text('SIGN UP'),
                               )
                             ],
-                          )
+                          ),
+                          isLoginTrue
+                              ? const Text(
+                                  "Username and password is incorrect",
+                                  style: TextStyle(color: Colors.red),
+                                )
+                              : const SizedBox(),
                         ],
                       ))))),
     );
